@@ -60,7 +60,7 @@ const bufferSize = 10_000
 // newGroupByTraceProcessor returns a new processor.
 func newGroupByTraceProcessor(logger *zap.Logger, st storage, nextConsumer consumer.Traces, config Config) *groupByTraceProcessor {
 	// the event machine will buffer up to N concurrent events before blocking
-	eventMachine := newEventMachine(logger, 10000, config.NumWorkers, config.NumTraces)
+	eventMachine := newEventMachine(logger, 1_000_000, config.NumWorkers, config.NumTraces)
 
 	sp := &groupByTraceProcessor{
 		logger:       logger,
