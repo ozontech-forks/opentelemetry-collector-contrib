@@ -552,7 +552,7 @@ func BenchmarkConsumeTracesCompleteOnFirstBatch(b *testing.B) {
 	st := newMemoryStorage()
 
 	// For each input trace there are always <= 2 events in the machine simultaneously.
-	semaphoreCh := make(chan struct{}, bufferSize/2)
+	semaphoreCh := make(chan struct{}, defaultBufferSize/2)
 	next := &mockProcessor{onTraces: func(context.Context, pdata.Traces) error {
 		<-semaphoreCh
 		return nil

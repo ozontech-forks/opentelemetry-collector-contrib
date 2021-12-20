@@ -36,6 +36,10 @@ type Config struct {
 	// Default: 1s.
 	WaitDuration time.Duration `mapstructure:"wait_duration"`
 
+	// BufferSize is a number of events (i.e. traces) in event queue.
+	// Default: 10_000
+	BufferSize int `mapstructure:"buffer_size"`
+
 	// DiscardOrphans instructs the processor to discard traces without the root span.
 	// This typically indicates that the trace is incomplete.
 	// Default: false.

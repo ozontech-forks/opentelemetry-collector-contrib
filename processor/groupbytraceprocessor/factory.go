@@ -33,6 +33,7 @@ const (
 	defaultWaitDuration   = time.Second
 	defaultNumTraces      = 1_000_000
 	defaultNumWorkers     = 1
+	defaultBufferSize     = 10_000
 	defaultDiscardOrphans = false
 	defaultStoreOnDisk    = false
 )
@@ -60,6 +61,7 @@ func createDefaultConfig() config.Processor {
 		NumTraces:         defaultNumTraces,
 		NumWorkers:        defaultNumWorkers,
 		WaitDuration:      defaultWaitDuration,
+		BufferSize:        defaultBufferSize,
 
 		// not supported for now
 		DiscardOrphans: defaultDiscardOrphans,
