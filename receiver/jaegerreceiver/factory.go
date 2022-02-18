@@ -22,6 +22,8 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/uber/jaeger-lib/metrics"
+	jprom "github.com/uber/jaeger-lib/metrics/prometheus"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configgrpc"
@@ -46,6 +48,8 @@ const (
 	defaultThriftCompactBindEndpoint   = "0.0.0.0:6831"
 	defaultThriftBinaryBindEndpoint    = "0.0.0.0:6832"
 	defaultAgentRemoteSamplingHTTPPort = 5778
+
+	metricsNamespace = "jaeger_receiver"
 )
 
 // NewFactory creates a new Jaeger receiver factory.
@@ -137,8 +141,11 @@ func createTracesReceiver(
 		}
 	}
 
+	// init prometheus default registry for metrics
+	mFactory := jprom.New().Namespace(metrics.NSOptions{Name: metricsNamespace, Tags: nil})
+
 	// Create the receiver.
-	return newJaegerReceiver(rCfg.ID(), &config, nextConsumer, set), nil
+	return newJaegerReceiver(rCfg.ID(), &config, nextConsumer, set, mFactory), nil
 }
 
 // extract the port number from string in "address:port" format. If the

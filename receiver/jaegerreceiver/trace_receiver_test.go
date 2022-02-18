@@ -36,6 +36,7 @@ import (
 	jaegerthrift "github.com/jaegertracing/jaeger/thrift-gen/jaeger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uber/jaeger-lib/metrics"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
@@ -57,7 +58,7 @@ var jaegerReceiver = config.NewComponentIDWithName("jaeger", "receiver_test")
 
 func TestTraceSource(t *testing.T) {
 	set := componenttest.NewNopReceiverCreateSettings()
-	jr := newJaegerReceiver(jaegerReceiver, &configuration{}, nil, set)
+	jr := newJaegerReceiver(jaegerReceiver, &configuration{}, nil, set, metrics.NullFactory)
 	require.NotNil(t, jr)
 }
 
@@ -97,7 +98,7 @@ func TestReception(t *testing.T) {
 	sink := new(consumertest.TracesSink)
 
 	set := componenttest.NewNopReceiverCreateSettings()
-	jr := newJaegerReceiver(jaegerReceiver, config, sink, set)
+	jr := newJaegerReceiver(jaegerReceiver, config, sink, set, metrics.NullFactory)
 
 	require.NoError(t, jr.Start(context.Background(), componenttest.NewNopHost()))
 	t.Cleanup(func() { require.NoError(t, jr.Shutdown(context.Background())) })
@@ -126,7 +127,7 @@ func TestPortsNotOpen(t *testing.T) {
 	sink := new(consumertest.TracesSink)
 
 	set := componenttest.NewNopReceiverCreateSettings()
-	jr := newJaegerReceiver(jaegerReceiver, config, sink, set)
+	jr := newJaegerReceiver(jaegerReceiver, config, sink, set, metrics.NullFactory)
 
 	require.NoError(t, jr.Start(context.Background(), componenttest.NewNopHost()))
 	t.Cleanup(func() { require.NoError(t, jr.Shutdown(context.Background())) })
@@ -155,7 +156,7 @@ func TestGRPCReception(t *testing.T) {
 	sink := new(consumertest.TracesSink)
 
 	set := componenttest.NewNopReceiverCreateSettings()
-	jr := newJaegerReceiver(jaegerReceiver, config, sink, set)
+	jr := newJaegerReceiver(jaegerReceiver, config, sink, set, metrics.NullFactory)
 
 	require.NoError(t, jr.Start(context.Background(), componenttest.NewNopHost()))
 	t.Cleanup(func() { require.NoError(t, jr.Shutdown(context.Background())) })
@@ -210,7 +211,7 @@ func TestGRPCReceptionWithTLS(t *testing.T) {
 	sink := new(consumertest.TracesSink)
 
 	set := componenttest.NewNopReceiverCreateSettings()
-	jr := newJaegerReceiver(jaegerReceiver, config, sink, set)
+	jr := newJaegerReceiver(jaegerReceiver, config, sink, set, metrics.NullFactory)
 
 	require.NoError(t, jr.Start(context.Background(), componenttest.NewNopHost()))
 	t.Cleanup(func() { require.NoError(t, jr.Shutdown(context.Background())) })
@@ -343,7 +344,7 @@ func TestSampling(t *testing.T) {
 	sink := new(consumertest.TracesSink)
 
 	set := componenttest.NewNopReceiverCreateSettings()
-	jr := newJaegerReceiver(jaegerReceiver, config, sink, set)
+	jr := newJaegerReceiver(jaegerReceiver, config, sink, set, metrics.NullFactory)
 
 	require.NoError(t, jr.Start(context.Background(), componenttest.NewNopHost()))
 	t.Cleanup(func() { require.NoError(t, jr.Shutdown(context.Background())) })
@@ -394,7 +395,7 @@ func TestSamplingFailsOnNotConfigured(t *testing.T) {
 	sink := new(consumertest.TracesSink)
 
 	set := componenttest.NewNopReceiverCreateSettings()
-	jr := newJaegerReceiver(jaegerReceiver, config, sink, set)
+	jr := newJaegerReceiver(jaegerReceiver, config, sink, set, metrics.NullFactory)
 
 	require.NoError(t, jr.Start(context.Background(), componenttest.NewNopHost()))
 	t.Cleanup(func() { require.NoError(t, jr.Shutdown(context.Background())) })
@@ -422,7 +423,7 @@ func TestSamplingFailsOnBadFile(t *testing.T) {
 	sink := new(consumertest.TracesSink)
 
 	set := componenttest.NewNopReceiverCreateSettings()
-	jr := newJaegerReceiver(jaegerReceiver, config, sink, set)
+	jr := newJaegerReceiver(jaegerReceiver, config, sink, set, metrics.NullFactory)
 	assert.Error(t, jr.Start(context.Background(), componenttest.NewNopHost()))
 	t.Cleanup(func() { require.NoError(t, jr.Shutdown(context.Background())) })
 }

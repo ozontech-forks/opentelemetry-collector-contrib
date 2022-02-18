@@ -93,6 +93,8 @@ type jReceiver struct {
 
 	settings component.ReceiverCreateSettings
 
+	mFactory metrics.Factory
+
 	grpcObsrecv *obsreport.Receiver
 	httpObsrecv *obsreport.Receiver
 }
@@ -121,12 +123,14 @@ func newJaegerReceiver(
 	config *configuration,
 	nextConsumer consumer.Traces,
 	set component.ReceiverCreateSettings,
+	mFactory metrics.Factory,
 ) *jReceiver {
 	return &jReceiver{
 		config:       config,
 		nextConsumer: nextConsumer,
 		id:           id,
 		settings:     set,
+		mFactory:     mFactory,
 		grpcObsrecv: obsreport.NewReceiver(obsreport.ReceiverSettings{
 			ReceiverID:             id,
 			Transport:              grpcTransport,
@@ -299,7 +303,7 @@ func (jr *jReceiver) startAgent(host component.Host) error {
 				ReceiverCreateSettings: jr.settings,
 			}),
 		}
-		processor, err := jr.buildProcessor(jr.agentBinaryThriftAddr(), jr.config.AgentBinaryThriftConfig, apacheThrift.NewTBinaryProtocolFactoryConf(nil), h)
+		processor, err := jr.buildProcessor(jr.agentBinaryThriftAddr(), jr.config.AgentBinaryThriftConfig, apacheThrift.NewTBinaryProtocolFactoryConf(nil), h, jr.mFactory)
 		if err != nil {
 			return err
 		}
@@ -315,7 +319,7 @@ func (jr *jReceiver) startAgent(host component.Host) error {
 				ReceiverCreateSettings: jr.settings,
 			}),
 		}
-		processor, err := jr.buildProcessor(jr.agentCompactThriftAddr(), jr.config.AgentCompactThriftConfig, apacheThrift.NewTCompactProtocolFactoryConf(nil), h)
+		processor, err := jr.buildProcessor(jr.agentCompactThriftAddr(), jr.config.AgentCompactThriftConfig, apacheThrift.NewTCompactProtocolFactoryConf(nil), h, jr.mFactory)
 		if err != nil {
 			return err
 		}
@@ -361,7 +365,7 @@ func (jr *jReceiver) startAgent(host component.Host) error {
 	return nil
 }
 
-func (jr *jReceiver) buildProcessor(address string, cfg ServerConfigUDP, factory apacheThrift.TProtocolFactory, a agent.Agent) (processors.Processor, error) {
+func (jr *jReceiver) buildProcessor(address string, cfg ServerConfigUDP, factory apacheThrift.TProtocolFactory, a agent.Agent, mFactory metrics.Factory) (processors.Processor, error) {
 	handler := agent.NewAgentProcessor(a)
 	transport, err := thriftudp.NewTUDPServerTransport(address)
 	if err != nil {
@@ -372,7 +376,7 @@ func (jr *jReceiver) buildProcessor(address string, cfg ServerConfigUDP, factory
 			return nil, err
 		}
 	}
-	server, err := servers.NewTBufferedServer(transport, cfg.QueueSize, cfg.MaxPacketSize, metrics.NullFactory)
+	server, err := servers.NewTBufferedServer(transport, cfg.QueueSize, cfg.MaxPacketSize, mFactory)
 	if err != nil {
 		return nil, err
 	}

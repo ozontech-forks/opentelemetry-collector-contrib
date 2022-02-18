@@ -31,6 +31,7 @@ import (
 	jaegerthrift "github.com/jaegertracing/jaeger/thrift-gen/jaeger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uber/jaeger-lib/metrics"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configgrpc"
@@ -62,7 +63,7 @@ func TestJaegerAgentUDP_ThriftCompact_InvalidPort(t *testing.T) {
 		AgentCompactThriftPort: port,
 	}
 	set := componenttest.NewNopReceiverCreateSettings()
-	jr := newJaegerReceiver(jaegerAgent, config, nil, set)
+	jr := newJaegerReceiver(jaegerAgent, config, nil, set, metrics.NullFactory)
 
 	assert.Error(t, jr.Start(context.Background(), componenttest.NewNopHost()), "should not have been able to startTraceReception")
 
@@ -87,7 +88,7 @@ func TestJaegerAgentUDP_ThriftBinary_PortInUse(t *testing.T) {
 		AgentBinaryThriftConfig: DefaultServerConfigUDP(),
 	}
 	set := componenttest.NewNopReceiverCreateSettings()
-	jr := newJaegerReceiver(jaegerAgent, config, nil, set)
+	jr := newJaegerReceiver(jaegerAgent, config, nil, set, metrics.NullFactory)
 
 	assert.NoError(t, jr.startAgent(componenttest.NewNopHost()), "Start failed")
 	t.Cleanup(func() { require.NoError(t, jr.Shutdown(context.Background())) })
@@ -107,7 +108,7 @@ func TestJaegerAgentUDP_ThriftBinary_InvalidPort(t *testing.T) {
 		AgentBinaryThriftPort: port,
 	}
 	set := componenttest.NewNopReceiverCreateSettings()
-	jr := newJaegerReceiver(jaegerAgent, config, nil, set)
+	jr := newJaegerReceiver(jaegerAgent, config, nil, set, metrics.NullFactory)
 
 	assert.Error(t, jr.Start(context.Background(), componenttest.NewNopHost()), "should not have been able to startTraceReception")
 
@@ -150,7 +151,7 @@ func TestJaegerHTTP(t *testing.T) {
 		},
 	}
 	set := componenttest.NewNopReceiverCreateSettings()
-	jr := newJaegerReceiver(jaegerAgent, config, nil, set)
+	jr := newJaegerReceiver(jaegerAgent, config, nil, set, metrics.NullFactory)
 	t.Cleanup(func() { require.NoError(t, jr.Shutdown(context.Background())) })
 
 	assert.NoError(t, jr.Start(context.Background(), componenttest.NewNopHost()), "Start failed")
@@ -188,7 +189,7 @@ func testJaegerAgent(t *testing.T, agentEndpoint string, receiverConfig *configu
 	// 1. Create the Jaeger receiver aka "server"
 	sink := new(consumertest.TracesSink)
 	set := componenttest.NewNopReceiverCreateSettings()
-	jr := newJaegerReceiver(jaegerAgent, receiverConfig, sink, set)
+	jr := newJaegerReceiver(jaegerAgent, receiverConfig, sink, set, metrics.NullFactory)
 	t.Cleanup(func() { require.NoError(t, jr.Shutdown(context.Background())) })
 
 	assert.NoError(t, jr.Start(context.Background(), componenttest.NewNopHost()), "Start failed")
