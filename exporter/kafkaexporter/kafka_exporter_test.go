@@ -119,12 +119,15 @@ func TestNewExporter_err_auth_type(t *testing.T) {
 }
 
 func TestTracesPusher(t *testing.T) {
-	c := sarama.NewConfig()
-	producer := mocks.NewSyncProducer(t, c)
-	producer.ExpectSendMessageAndSucceed()
+	in, _ := launchProducers(1, func() (sarama.SyncProducer, error) {
+		c := sarama.NewConfig()
+		producer := mocks.NewSyncProducer(t, c)
+		producer.ExpectSendMessageAndSucceed()
+		return producer, nil
+	})
 
 	p := kafkaTracesProducer{
-		producer:  producer,
+		in:        in,
 		marshaler: newPdataTracesMarshaler(otlp.NewProtobufTracesMarshaler(), defaultEncoding),
 	}
 	t.Cleanup(func() {
@@ -135,13 +138,17 @@ func TestTracesPusher(t *testing.T) {
 }
 
 func TestTracesPusher_err(t *testing.T) {
-	c := sarama.NewConfig()
-	producer := mocks.NewSyncProducer(t, c)
 	expErr := fmt.Errorf("failed to send")
-	producer.ExpectSendMessageAndFail(expErr)
+
+	in, _ := launchProducers(1, func() (sarama.SyncProducer, error) {
+		c := sarama.NewConfig()
+		producer := mocks.NewSyncProducer(t, c)
+		producer.ExpectSendMessageAndFail(expErr)
+		return producer, nil
+	})
 
 	p := kafkaTracesProducer{
-		producer:  producer,
+		in:        in,
 		marshaler: newPdataTracesMarshaler(otlp.NewProtobufTracesMarshaler(), defaultEncoding),
 		logger:    zap.NewNop(),
 	}
