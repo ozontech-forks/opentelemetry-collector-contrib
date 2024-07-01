@@ -42,6 +42,7 @@ import (
 	"github.com/jaegertracing/jaeger/thrift-gen/jaeger"
 	"github.com/jaegertracing/jaeger/thrift-gen/sampling"
 	"github.com/jaegertracing/jaeger/thrift-gen/zipkincore"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/uber/jaeger-lib/metrics"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
@@ -55,6 +56,14 @@ import (
 
 	jaegertranslator "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger"
 )
+
+const namespace = "jaeger_receiver"
+
+var acceptedSpanByService = prometheus.NewCounterVec(prometheus.CounterOpts{
+	Name:      "accepted_spans_by_service",
+	Namespace: namespace,
+	Help:      "Total number of accepted span by service",
+}, []string{"service"})
 
 // configuration defines the behavior and the ports that
 // the Jaeger receiver will use.
@@ -125,6 +134,8 @@ func newJaegerReceiver(
 	set component.ReceiverCreateSettings,
 	mFactory metrics.Factory,
 ) *jReceiver {
+	prometheus.MustRegister(acceptedSpanByService)
+
 	return &jReceiver{
 		config:       config,
 		nextConsumer: nextConsumer,
@@ -277,6 +288,9 @@ func (jr *jReceiver) GetBaggageRestrictions(ctx context.Context, serviceName str
 
 func (jr *jReceiver) PostSpans(ctx context.Context, r *api_v2.PostSpansRequest) (*api_v2.PostSpansResponse, error) {
 	ctx = jr.grpcObsrecv.StartTracesOp(ctx)
+
+	// measure number of accepted spans by service
+	acceptedSpanByService.WithLabelValues(r.GetBatch().Process.ServiceName).Add(float64(len(r.GetBatch().Spans)))
 
 	td := jaegertranslator.ProtoBatchToInternalTraces(r.GetBatch())
 
